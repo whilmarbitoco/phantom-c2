@@ -13,7 +13,7 @@ from agent_manager import AgentManager
 from module_loader import ModuleLoader
 from build_agent import build_agent_zip
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SECRET_KEY'] = os.urandom(32)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
@@ -147,4 +147,4 @@ if __name__ == '__main__':
     print('[*] Dashboard : http://0.0.0.0:8080')
     print('[*] API       : http://0.0.0.0:8080/api')
     print('[*] WebSocket : enabled\n')
-    socketio.run(app, host='0.0.0.0', port=8080, debug=False, use_reloader=False)
+    socketio.run(app, host='0.0.0.0', port=8080, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
