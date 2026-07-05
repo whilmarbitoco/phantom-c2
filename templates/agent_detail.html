@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Agent — Phantom C2</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/terminal.css') }}">
+</head>
+<body>
+<header class="top">
+  <div class="logo"><span class="glitch">PHANTOM</span>://C2 — AGENT</div>
+  <div class="header-meta"><a href="/">[back]</a></div>
+</header>
+<section class="panel" style="padding:14px;">
+  <div class="panel-title">AGENT DETAIL</div>
+  <pre style="color:var(--text);">{{ agent | tojson(indent=2) }}</pre>
+</section>
+</body>
+</html>
